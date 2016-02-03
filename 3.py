@@ -1,15 +1,23 @@
-fieldSize = int(input('Введите размер поля \n'))
-d = int(input('Введите коэффициент геометрической прогрессии \n'))
+def check(live, fieldSize):
+    return fieldSize >= len(bin(live)) - 2
 
-field=[]
-for i in range(fieldSize):
-    field.append('.')
+def generate_field():
+    fieldSize = int(input('Введите размер поля \n'))
+    live = int(input('Введите десятичное число, соответствующее полю \n'))
 
-# оживление клеток с нужными номерами
-number=1
-while number<fieldSize:
-    field[number-1]='o'
-    number*=d
+    while not check(live, fieldSize):
+        print('не корректный ввод')
+        fieldSize = int(input('Введите размер поля \n'))
+        live = int(input('Введите десятичное число, соответствующее полю \n'))
+
+    pole = bin(live)[2:]
+    field = ['.'] * (fieldSize - len(pole))
+    for i in pole:
+        if i == '1':
+            field.append('o')
+        else:
+            field.append('.')
+    return field
 
 def lifeIteration():
     j=[]
@@ -33,11 +41,18 @@ def lifeIteration():
     for i in m:
         field[i]='.'
 
+
+
+
+field = generate_field()
+
 while True:
     print(''.join(field))
-    h=input()
-    if h == 'w':
+    action = input()
+    if action == 'w':
         for i in range(10):
             lifeIteration()
+    elif action == 'r':
+        field = generate_field()
     else:
         lifeIteration()
