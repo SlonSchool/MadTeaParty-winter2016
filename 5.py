@@ -13,10 +13,16 @@ def step(oldField, count_symb):
     oldField = '.' + oldField + '.' # Borders
     newField = []
     for i in range(1, count_symb + 1):
-        if (oldField[i + 1] == 'o') ^ (oldField[i - 1] == 'o'): # '^' means xor
-            newField.append('o')
+        if oldField[i] == '.':
+            if oldField[i - 1] == 'o':
+                newField.append('o')
+            else:
+                newField.append('.')
         else:
-            newField.append('.')
+            if oldField[i - 1] != oldField[i + 1]:
+                newField.append('o')
+            else:
+                newField.append('.')
     return ''.join(newField)
 
 while True:
@@ -34,9 +40,9 @@ while True:
         print(field)
         command = input()
         count=1
-        if command == 'w':
-            count = 10
-        elif command=='r':
+        if len(command) > 1:
+            count = int(command[2:])
+        elif len(command) == 1:
             notrestart=False
         for i in range(count):
             field = step(field, count_symb)

@@ -1,6 +1,9 @@
 import copy
 import math
 
+ALIVE = 'O'
+DEAD = '.'
+
 def requestField():
     field = None
     while field == None:
@@ -16,47 +19,43 @@ def createField(size, number):
         print("Template larger then field size! Try again.")
         return None
 
-    digit_to_state = {'1': 'O', '0': '.'}
-    field = ['.'] * size # изначально все клетки на поле мертвы
+    digit_to_state = {'1': ALIVE, '0': DEAD}
+    field = [DEAD] * size # изначально все клетки на поле мертвы
     len_difference = size - len(template)
     for i in range(len(template)):
         field[len_difference + i] = digit_to_state[template[i]]
     return field
 
 def checkCell(field, i):
-    # клетка жива только тогда, когда у нее 1 живой сосед, т.е. соседи разные
-    return field[i - 1] != field[i + 1]
+    # клетка выживает если жив ровно один сосед                 или если она была мертва, а слева есть живой
+    return (field[i - 1] != field[i + 1] and field[i] == ALIVE) or (field[i - 1] == ALIVE and field[i] == DEAD)
+
+def updated(field):
+    newField = copy.copy(field)
+    field = [DEAD] + field + [DEAD]
+    # проверка для всех остальных клеток
+    for i in range(1, len(field) - 1):
+        if checkCell(field, i):
+            newField[i - 1] = ALIVE
+        else:
+            newField[i - 1] = DEAD
+    return newField
+
 
 def main():
     field = requestField()
 
     while True:
+        print(''.join(field))
         command = input()
         count = 1
         if command == '':
             count = 1
         if command == 'w':
-            count = 10
+            count = int(input('Enter count of steps: '))
         if command == 'r':
             field = requestField()
-
-        print(''.join(field))
         for i in range(count):
-            newField = copy.copy(field)
-
-            # костыль для крайних клеток
-            newField[0] = field[1]
-            newField[-1] = field[-2]
-
-            # проверка для всех остальных клеток
-            for i in range(1, len(field) - 1):
-                if checkCell(field, i):
-                    newField[i] = 'O'
-                else:
-                    newField[i] = '.'
-
-            field = copy.copy(newField)
-
-    return 0
+            field = updated(field)
 
 main()

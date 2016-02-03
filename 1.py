@@ -1,36 +1,48 @@
 from copy import deepcopy
 
-def createField(length, decimalNumber):
-    if len(bin(decimalNumber)) - 2 > length:
-        print('Entered length is not enough for your number. Please enter new data (length and number) in one string.')
-        newLength, newDecimal = list(map(int, input().split()))
-        createField(newLength, newDecimal)
-    else:
-        binary = bin(decimalNumber)[2:]
-        field = ['.'] * length
-        j = 0
-        for i in range(length - len(binary), length):
-            field[i] = '.' if binary[j] == '0' else 'o'
-            j += 1
-        return ''.join(field)
+ALIVE = 'o'
+DEAD = '.'
+
+def requestFieldParams():
+    print("Enter field length")
+    length = int(input())
+    print("Enter decimal number")
+    decimal = int(input())
+    return length, decimal
+
+def createField():
+    good_input = False
+    while not good_input:
+        length, decimal = requestFieldParams()
+        if len(bin(decimal)) - 2 > length:
+            print('Entered length is not enough for your number. Retry')
+        else:
+            good_input = True
+    binary = bin(decimal)[2:]
+    field = [DEAD] * length
+    j = 0
+    for i in range(length - len(binary), length):
+        field[i] = DEAD if binary[j] == '0' else ALIVE
+        j += 1
+    return ''.join(field)
 
 def step(live):
-    new = ['.'] * len(live)
-    if live[1] == '.':
-        new[0] = ('.')
-    else:
-        new[0] = ('o')
+    new = [DEAD] * len(live)
+    if live[1] == DEAD:
+        new[0] = DEAD
+    elif live[0] == ALIVE:
+        new[0] = ALIVE
 
-    if live[-2] == '.':
-        new[-1] = '.'
+    if live[-2] == ALIVE:
+        new[-1] = ALIVE
     else:
-        new[-1] = 'o'
+        new[-1] = DEAD
 
     for i in range(1, len(live) - 1):
-        if live[i - 1] == 'o' and live[i + 1] == 'o' or live[i - 1] != 'o' and live[i + 1] != 'o':
-            new[i] = ('.')
+        if (live[i - 1] == ALIVE and live[i] == DEAD) or (live[i - 1] != live[i + 1] and live[i] == ALIVE):
+            new[i] = ALIVE
         else:
-            new[i] = ('o')
+            new[i] = DEAD
 
     live = ''.join(deepcopy(new))
     return live
@@ -38,20 +50,16 @@ def step(live):
 def checkBeforeRestart():
     print('Do you really want to restart?\nEnter "yes" oder "no"')
     doesUserWant = input()
-    if doesUserWant == 'yes':
-        return True
-    elif doesUserWant == 'no':
-        return False
-    else:
-        print('Incorrect answer. Please enter your answer again\n')
-        checkBeforeRestart()
+    while True:
+        if doesUserWant == 'yes':
+            return True
+        elif doesUserWant == 'no':
+            return False
+        else:
+            print('Incorrect answer. Please enter your answer again\n')
 
-print("Enter field length")
-amount = int(input())
-print("Enter decimal number")
-decimal = int(input())
 
-live = createField(amount, decimal)
+live = createField()
 
 while True:
     print(live)
@@ -59,13 +67,11 @@ while True:
     steps_to_pass = 0
     if s == "":
         steps_to_pass = 1
-    if s == "w":
-        steps_to_pass = 10
-    if s == 'r':
+    elif s.split()[0] == "w":
+        steps_to_pass = int(s.split()[-1])
+    elif s == 'r':
         if checkBeforeRestart():
-            newLength = int(input('Enter a new field length\n'))
-            newDecimal = int(input('Enter a new decimal number\n'))
-            live = createField(newLength, newDecimal)
+            live = createField()
         else:
             steps_to_pass = 0
 
