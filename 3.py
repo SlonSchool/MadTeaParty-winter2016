@@ -5,16 +5,16 @@ state = {'1': ALIVE, '0': DEAD}
 def checkIfInputIsIncorrect(decimalNumber, fieldSize):
     return fieldSize < len(bin(decimalNumber)) - 2
 
-def generate_field(length, decimalNum, specialRules):
+def generate_field(length, decimalNum, rulesTemplate):
     binary = bin(decimalNum)[2:]
     field = [DEAD] * (length - len(binary))
-    installRules(specialRules)
+    installRules(rulesTemplate)
     for i in binary:
         field.append(state[i])
     return field
 
-def installRules(specialRules):
-    s=specialRules
+def installRules(rulesTemplate):
+    s=rulesTemplate
     if len(s)<8:
         s_array=['0']*(8-len(s))
         s_array+=list(s)
@@ -34,14 +34,14 @@ def installRules(specialRules):
 def userInput():
     fieldSize = int(input('Введите размер поля \n'))
     decimalNumber = int(input('Введите десятичное число, соответствующее полю \n'))
-    specialRules = bin(int(input('Введите специальные правила для игры \n')))[2:]
+    rulesTemplate = bin(int(input('Введите специальные правила для игры \n')))[2:]
     if checkIfInputIsIncorrect(decimalNumber, fieldSize):
         print('Некорректный ввод')
         return userInput()
     else:
-        return [fieldSize, decimalNumber, specialRules]
+        return [fieldSize, decimalNumber, rulesTemplate]
 
-def lifeIteration():
+def lifeIteration(field, rules):
     aliveCells=[]
     deadCells=[]
     if rules['.'+str(field[0])+str(field[1])]==ALIVE:
@@ -65,21 +65,70 @@ def lifeIteration():
         field[i]=ALIVE
     for i in deadCells:
         field[i]=DEAD
+
+def fieldToBinary(field):
+    global DEAD
+    global ALIVE
+    binary = ''
+    state = {DEAD: '0', ALIVE: '1'}
+    for char in field:
+        binary += state[char]
+    return binary
+
+def saveField(fieldSize, decimalNumber, rules, fileName):
+    saveFile = open(fileName, 'w')
+    print(fieldSize, decimalNumber, rules, sep = '\n', file = saveFile)
+    saveFile.close()
+    return
+
+def loadField(fileName):
+    try:
+        loadFile = open(fileName, 'r')
+        fieldData = loadFile.readlines()
+        fieldSize = fieldData[0]
+        decimalNumber = fieldData[1]
+        rules = fieldData[2]
+        loadFile.close()
+        return [int(fieldSize), int(decimalNumber, 2), bin(int(rules, 2))[2:]]
+    except:
+        print('File', fileName, 'does not exist.')
+
 inp=userInput()
 field = generate_field(*inp)
-specialRules=inp[2]
-rules=installRules(specialRules)
+rulesTemplate=inp[2]
+rules=installRules(rulesTemplate)
 
 while True:
     print(''.join(field))
     action = input()
-    if 'w' in action:
+    if len(action) == 0:
+        action = '0'
+
+    if action[0] == 'w':
         letter, numberOfSteps = list(action.split())
         numberOfSteps = int(numberOfSteps)
         for i in range(numberOfSteps):
             lifeIteration()
+
     elif action == 'r':
         field = generate_field(*userInput())
-    else:
-        lifeIteration()
 
+    elif action[0] == 's':
+        fileName = list(action.split())[1]
+        saveField(len(field), fieldToBinary(field), rulesTemplate, fileName)
+
+    elif action[0] == 'l':
+        fileName = list(action.split())[1]
+        fieldData = loadField(fileName)
+        '''
+        try:
+            rules = installRules(fieldData[2])
+            field = generate_field(fieldData)
+        except:
+            pass
+        '''
+        rules = installRules(fieldData[2])
+        field = generate_field(*fieldData)
+
+    else:
+        lifeIteration(field, rules)

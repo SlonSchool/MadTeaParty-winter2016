@@ -1,5 +1,6 @@
 import copy
 import math
+import os.path
 
 ALIVE = 'O'
 DEAD = '.'
@@ -58,6 +59,31 @@ def createField(size, number):
 
     return field
 
+def fieldToNumber(field):
+    code = {DEAD: 0, ALIVE: 1}
+    result = 0
+    for c in field:
+        result *= 2
+        result += code[c]
+    return result
+
+def rulesToNumber(rulesDict):
+    rulesField = ''
+    for key in sorted(rulesDict):
+        rulesField += rulesDict[key]
+    return fieldToNumber(rulesField)
+
+def writeToFile(filename, fieldSize, fieldNum, rulesNum):
+    outfile = open(filename, 'w')
+    outfile.write(str(fieldSize) + ' ' + str(fieldNum) + ' ' + str(rulesNum) + '\n')
+    outfile.close()
+
+def readFromFile(filename): # Returns field string and rules dict
+    infile = open(filename)
+    fieldSize, fieldNum, rulesNum = map(int, infile.read().split())
+    infile.close()
+    return createField(fieldSize, fieldNum), createRules(rulesNum)
+
 def checkCell(field, i, rulesDict):
     try:
         return rulesDict[''.join(field)[i - 1:i + 2]] == ALIVE
@@ -76,7 +102,6 @@ def updated(field, rules):
             newField[i - 1] = DEAD
     return newField
 
-
 def main():
     field = requestField()
     rules = createRules(int(input('Enter a decimal number for rules\n')) % 256)
@@ -87,11 +112,22 @@ def main():
         count = 1
         if command == '':
             count = 1
-        if command == 'w':
+        elif command == 'w':
             count = int(input('Enter count of steps: '))
-        if command == 'r':
+        elif command == 'r':
             field = requestField()
             rules = createRules(int(input('Enter a decimal number for rules\n')) % 256)
+        elif command[0] == 's':
+            filename = command.split()[1]
+            writeToFile(filename, len(field), fieldToNumber(field), rulesToNumber(rules))
+            count = 0
+        elif command[0] == 'l':
+            filename = command.split()[1]
+            while not os.path.isfile(filename):
+                filename = input('Please, provide correct filename: ')
+            field, rules = readFromFile(filename)
+            count = 0
+
         for i in range(count):
             field = updated(field, rules)
 

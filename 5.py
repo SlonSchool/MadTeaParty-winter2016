@@ -1,6 +1,27 @@
 ALIVE = 'o'
 DEAD = '.'
 
+def save(field, count_symb, rules, file_name):
+    file1 = open(file_name, "w")
+    print(field, count_symb, rulesNum, file = file1)
+    file1.close()
+
+def load(file_name):
+    file1 = open(file_name, "r")
+    field, count_symb, rules = map(int, file1.readline().split())
+    field = bin(field)[2:]
+    field = createField(count_symb, field)
+    return (field, count_symb, rules)
+
+def field_to_number(field):
+    bin_number = ''
+    for i in field:
+        if i == ALIVE:
+            bin_number += '1'
+        else:
+            bin_number += '0'
+    number = int(bin_number, 2)
+    return number
 
 def createField(count_symb, pos):
     result = ['.' for i in range(count_symb)]
@@ -44,13 +65,13 @@ while True:
     field=0
     notrestart=True
     while field == 0:
-        print('Введите длину поля и число, описывающее поле')
+        print('enter size of game, enter your field')
         count_symb = int(input())
         pos=bin(int(input()))[2:]
         field = createField(count_symb, pos)
         if field==0:
-            print('Введите еще раз')
-    rulesNum = int(input('Введите число (от 0 до 255), описывающее правила: '))
+            print('Wrong! Repeat please')
+    rulesNum = int(input('enter your rules: '))
     rules = createRulesDict(rulesNum)
     while notrestart:
 
@@ -61,6 +82,17 @@ while True:
             count = int(input('Enter count of iterations: '))
         elif command == 'r':
             notrestart=False
+        elif command == 's':
+            file_name = input("Enter file's name: ")
+            save(field_to_number(field), count_symb, rulesNum, file_name)
+        elif command == 'l':
+            file_name = input("Enter file's name: ")
+            old = load(file_name)
+            field = old[0]
+            count_symb = old[1]
+            rulesNum = old[2]
+            rules = createRulesDict(rulesNum)
+            continue
         for i in range(count):
             field = step(field, rules)
 
