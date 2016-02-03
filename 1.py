@@ -1,27 +1,41 @@
 from copy import deepcopy
 
-LIVE_SIZE = 200
 
-live = ['.'] * LIVE_SIZE
+print("Enter field length")
+amount = int(input())
+print("Enter d - geom increment")
+degree = int(input())
+
+live = ['.'] * (amount + 1)
 cord = 1
-while cord <= LIVE_SIZE:
-    live[cord-1] = 'o'
-    cord *= 2
+while True:
+    live[cord] = 'o'
+    cord *= degree
+    if cord > amount:
+        break
+live = live[1:]
+live = ['.'] + live + ['.']
+
+
+print("".join(live[1:-1]))
 
 while True:
-    print("".join(live))
-    input()
+    s = input()
+    steps_to_pass = 0
+    if s == "":
+        steps_to_pass = 1
+    if s == "w":
+        steps_to_pass = 10
 
-    live = ['.'] + new + ['.']
-    new_live = []
-    for i in range(1, len(live) - 1):
-        if (
-            (live[i - 1] == 'o' and live[i + 1] == 'o')
-            or (live[i - 1] != 'o' and live[i + 1] != 'o')
-        ):
-            new_live.append('.')
-        else:
-            new_live.append('o')
-    live = deepcopy(new_live)
+    for step in range(steps_to_pass):
+        new = []
+        for i in range(1, len(live) - 1):
+            if live[i - 1] == 'o' and live[i + 1] == 'o' or live[i - 1] != 'o' and live[i + 1] != 'o':
+                new.append('.')
+            else:
+                new.append('o')
+        live = deepcopy(new)
+        live = ['.'] + new + ['.']
 
+    print("".join(live[1:-1]))
 

@@ -1,40 +1,43 @@
-s=[]
-for i in range(200):
-    s.append('.')
-k=1
-while k<200:
-    s[k-1]='o'
-    k*=2
+fieldSize = int(input('Введите размер поля \n'))
+d = int(input('Введите коэффициент геометрической прогрессии \n'))
 
+field=[]
+for i in range(fieldSize):
+    field.append('.')
 
-def st(m):
-    s=''
-    for i in m:
-        s+=i
-    return s
-print(st(s))
-while True:
-    h=input()
+# оживление клеток с нужными номерами
+number=1
+while number<fieldSize:
+    field[number-1]='o'
+    number*=d
+
+def lifeIteration():
     j=[]
     m=[]
-    if s[1]=='.':
+    if field[1]=='.':
         m.append(0)
     else:
         j.append(0)
-    n=len(s)
-    if s[n-2]=='.':
+    n=len(field)
+    if field[n-2]=='.':
         m.append(n-1)
     else:
         j.append(n-1)
     for i in range(1, n-1):
-
-        if (s[i-1]=='.' and s[i+1]=='.') or (s[i-1]=='o' and s[i+1]=='o'):
+        if (field[i-1]=='.' and field[i+1]=='.') or (field[i-1]=='o' and field[i+1]=='o'):
             m.append(i)
         else:
             j.append(i)
     for i in j:
-        s[i]='o'
+        field[i]='o'
     for i in m:
-        s[i]='.'
-    print(st(s))
+        field[i]='.'
 
+while True:
+    print(''.join(field))
+    h=input()
+    if h == 'w':
+        for i in range(10):
+            lifeIteration()
+    else:
+        lifeIteration()
