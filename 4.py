@@ -13,6 +13,37 @@ def requestField():
         field = createField(size, number)
     return field
 
+def dictiKeysGenerator(zeroValue, oneValue):
+    # generates keys like '...', '..O' etc using binary numbers from 0 to 7
+    numbers = range(0, 8)
+    binNumbers = []
+    for elem in numbers:
+        binary = bin(elem)[2::]
+        while len(binary) < 3:
+            binary = '0' + binary
+        binNumbers.append(binary)
+    keys = []
+    symbol = {'1': oneValue, '0': zeroValue}
+    for elem in binNumbers:
+        keyElem = ''
+        for char in elem:
+            keyElem += symbol[char]
+        keys.append(keyElem)
+    return keys
+
+def createRules(decimalNumber):
+    global DEAD
+    global ALIVE
+    binary = bin(decimalNumber)[2:]
+    while len(binary) < 8:
+        binary = '0' + binary
+    state = {'0': DEAD, '1': ALIVE}
+    rules = {}
+    rulesKeys = dictiKeysGenerator(DEAD, ALIVE)
+    for i in range(len(rulesKeys)):
+        rules[rulesKeys[i]] = state[binary[i]]
+    return rules
+
 def createField(size, number):
     template = str(bin(number))[2:]
     if size < len(template):
@@ -24,18 +55,22 @@ def createField(size, number):
     len_difference = size - len(template)
     for i in range(len(template)):
         field[len_difference + i] = digit_to_state[template[i]]
+
     return field
 
-def checkCell(field, i):
-    # клетка выживает если жив ровно один сосед                 или если она была мертва, а слева есть живой
-    return (field[i - 1] != field[i + 1] and field[i] == ALIVE) or (field[i - 1] == ALIVE and field[i] == DEAD)
+def checkCell(field, i, rulesDict):
+    try:
+        return rulesDict[''.join(field)[i - 1:i + 2]] == ALIVE
+    except KeyError:
+        print(rulesDict)
+        print(''.join(field)[i - 1:i + 2])
 
-def updated(field):
+def updated(field, rules):
     newField = copy.copy(field)
     field = [DEAD] + field + [DEAD]
     # проверка для всех остальных клеток
     for i in range(1, len(field) - 1):
-        if checkCell(field, i):
+        if checkCell(field, i, rules):
             newField[i - 1] = ALIVE
         else:
             newField[i - 1] = DEAD
@@ -44,6 +79,7 @@ def updated(field):
 
 def main():
     field = requestField()
+    rules = createRules(int(input('Enter a decimal number for rules\n')) % 256)
 
     while True:
         print(''.join(field))
@@ -55,7 +91,8 @@ def main():
             count = int(input('Enter count of steps: '))
         if command == 'r':
             field = requestField()
+            rules = createRules(int(input('Enter a decimal number for rules\n')) % 256)
         for i in range(count):
-            field = updated(field)
+            field = updated(field, rules)
 
 main()
