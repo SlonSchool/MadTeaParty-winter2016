@@ -1,134 +1,150 @@
+from copy import deepcopy
+
 DEAD = '.'
 ALIVE = 'o'
 state = {'1': ALIVE, '0': DEAD}
+state_reverse = {ALIVE: '1', DEAD: '0'}
 
-def checkIfInputIsIncorrect(decimalNumber, fieldSize):
+def check_If_Input_Is_Incorrect(decimalNumber, fieldSize):
     return fieldSize < len(bin(decimalNumber)) - 2
 
-def generate_field(length, decimalNum, rulesTemplate):
-    binary = bin(decimalNum)[2:]
-    field = [DEAD] * (length - len(binary))
-    installRules(rulesTemplate)
-    for i in binary:
-        field.append(state[i])
-    return field
+def generate_field(length, numbers):
+    stereofield = []
+    for decimalNum in numbers:
+        monofield = []
+        binary = bin(decimalNum)[2:]
+        for i in binary:
+            monofield.append(state[i])
+        monofield = [DEAD] * (length - len(binary)) + monofield
+        stereofield.append(monofield)
+    return stereofield
 
-def installRules(rulesTemplate):
-    s=rulesTemplate
-    if len(s)<8:
-        s_array=['0']*(8-len(s))
-        s_array+=list(s)
-        s=''.join(s_array)
-    rules={
-        '...': state[s[0]],
-        '..o': state[s[1]],
-        '.o.': state[s[2]],
-        '.oo': state[s[3]],
-        'o..': state[s[4]],
-        'o.o': state[s[5]],
-        'oo.': state[s[6]],
-        'ooo': state[s[7]]
-        }
-    return rules
-
-def userInput():
-    fieldSize = int(input('Введите размер поля \n'))
-    decimalNumber = int(input('Введите десятичное число, соответствующее полю \n'))
-    rulesTemplate = bin(int(input('Введите специальные правила для игры \n')))[2:]
-    if checkIfInputIsIncorrect(decimalNumber, fieldSize):
-        print('Некорректный ввод')
-        return userInput()
-    else:
-        return [fieldSize, decimalNumber, rulesTemplate]
-
-def lifeIteration(field, rules):
-    aliveCells=[]
-    deadCells=[]
-    if rules['.'+str(field[0])+str(field[1])]==ALIVE:
-        aliveCells.append(0)
-    else:
-        deadCells.append(0)
-
-    n=len(field)
-    if rules[str(field[n-2])+str(field[n-1])+'.']==ALIVE:
-        aliveCells.append(n-1)
-    else:
-        deadCells.append(n-1)
-
-    for i in range(1, n-1):
-            if rules[str(field[i-1]) + str(field[i]) + str(field[i+1])]==ALIVE:
-                aliveCells.append(i)
+def user_Input():
+    field = []
+    fieldSize = int(input("ENTER FIELD'S SIZE\n"))
+    print("ENTER NUMBER'S IN YOUR FIELD")
+    for i in range(fieldSize):
+        while True:
+            number = int(input())
+            if number >= 2 ** fieldSize:
+                print('uncorrect!')
             else:
-                deadCells.append(i)
+                break
+        field.append(number)
+    print("ENTER YOUR RULES")
+    rulesTemplate = list(map(int, input().split()))
+    return [fieldSize, field, rulesTemplate]
 
-    for i in aliveCells:
-        field[i]=ALIVE
-    for i in deadCells:
-        field[i]=DEAD
-
-def fieldToBinary(field):
+def life_Iteration(field, rules):
+    new = [[DEAD] * (len(field) + 2) for i in range(len(field) + 2)]
+    for i in range(len(field)):
+        for j in range(len(field[i])):
+            new[i + 1][j + 1] = field[i][j]
+    for i in range(1, len(new) - 1):
+        for j in range(1, len(new[i]) - 1):
+            if new[i][j] == DEAD:
+                if come_to_a_life(new, rules[0], i, j):
+                    field[i - 1][j - 1] = ALIVE
+                else:
+                    field[i - 1][j - 1] = DEAD
+            if new[i][j] == ALIVE:
+                if is_alive(new, rules[1], i, j):
+                    field[i - 1][j - 1] = ALIVE
+                else:
+                    field[i - 1][j - 1] = DEAD
+    return field
+def field_To_Binary(field):
     global DEAD
     global ALIVE
     binary = ''
     state = {DEAD: '0', ALIVE: '1'}
-    for char in field:
-        binary += state[char]
-    return binary
+    new_field = []
+    for i in range(len(field)):
+        binary = ''
+        for char in field[i]:
+            binary += state[char]
+        new_field.append(int(binary, 2))
+    return new_field
 
-def saveField(fieldSize, decimalNumber, rules, fileName):
+def save_Field(fieldSize, save_field, rules, fileName):
     saveFile = open(fileName, 'w')
-    print(fieldSize, decimalNumber, rules, sep = '\n', file = saveFile)
+    print(fieldSize, file = saveFile)
+    for i in save_field:
+        print(i, file = saveFile)
+    print(rules[0], file = saveFile)
+    print(rules[1], file = saveFile)
     saveFile.close()
     return
 
-def loadField(fileName):
+def load_Field(fileName):
     try:
+        field = []
         loadFile = open(fileName, 'r')
-        fieldData = loadFile.readlines()
-        fieldSize = fieldData[0]
-        decimalNumber = fieldData[1]
-        rules = fieldData[2]
+        fieldSize = int(loadFile.readline())
+        for i in range(fieldSize):
+            number = int(loadFile.readline())
+            field.append(number)
+        field = generate_field(fieldSize, field)
+        rule1 = loadFile.readline()
+        rule2 = loadFile.readline()
+        rules = [rule1, rule2]
         loadFile.close()
-        return [int(fieldSize), int(decimalNumber, 2), bin(int(rules, 2))[2:]]
+        return [int(fieldSize), field, rules]
     except:
         print('File', fileName, 'does not exist.')
 
-inp=userInput()
-field = generate_field(*inp)
-rulesTemplate=inp[2]
-rules=installRules(rulesTemplate)
+def come_to_a_life(field, rule, x1, y1):
+    count = 0
+    x = [-1, 0, 0, 1, -1, -1, 1, 1]
+    y = [0, 1, -1, 0, -1, 1, -1, 1]
+    for i in range(8):
+        #print(x1 + x[i], y1 + y[i])
+        count += int(state_reverse[field[x1 + x[i]][y1 + y[i]]])
+    return str(rule).find(str(count)) != -1
 
+def is_alive(field, rule, x1, y1):
+    count = 0
+    x = [-1, 0, 0, 1, -1, -1, 1, 1]
+    y = [0, 1, -1, 0, -1, 1, -1, 1]
+    for i in range(8):
+        count += int(state_reverse[field[x1 + x[i]][y1 + y[i]]])
+    return str(rule).find(str(count)) != -1
+
+fieldsize, field, rulesTemplate = user_Input()
+save_field = deepcopy(field)
+field = generate_field(fieldsize, field)
 while True:
-    print(''.join(field))
+    for i in field:
+        print("".join(i))
     action = input()
     if len(action) == 0:
         action = '0'
-
     if action[0] == 'w':
         letter, numberOfSteps = list(action.split())
         numberOfSteps = int(numberOfSteps)
         for i in range(numberOfSteps):
-            lifeIteration()
+            life_Iteration(field, rulesTemplate)
 
     elif action == 'r':
-        field = generate_field(*userInput())
+        fieldsize, field, rulesTemplate = user_Input()
+        field = generate_field(fieldsize, field)
 
     elif action[0] == 's':
         fileName = list(action.split())[1]
-        saveField(len(field), fieldToBinary(field), rulesTemplate, fileName)
+        save_Field(len(field), field_To_Binary(field), rulesTemplate, fileName)
 
     elif action[0] == 'l':
         fileName = list(action.split())[1]
-        fieldData = loadField(fileName)
+        fieldData = load_Field(fileName)
         '''
         try:
-            rules = installRules(fieldData[2])
+            rules = install_Rules(fieldData[2])
             field = generate_field(fieldData)
         except:
             pass
         '''
-        rules = installRules(fieldData[2])
-        field = generate_field(*fieldData)
-
+        rulesTemplate = fieldData[2]
+        fieldSize = fieldData[0]
+        field = fieldData[1]
     else:
-        lifeIteration(field, rules)
+        life_Iteration(field, rulesTemplate)
